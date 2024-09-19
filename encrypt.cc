@@ -7,6 +7,7 @@ int IP[8] = {2, 6, 3, 1, 4, 8, 5, 7};
 int IP1[8] = {4, 1, 3, 5, 7, 2, 8, 6};
 int P10[10] = {3, 5, 2, 7, 4, 10, 1, 9, 8, 6};
 int P8[8] = {6, 3, 7, 4, 8, 5, 10, 9};
+int EP[8] = {4,1,2,3,2,3,4,1};
 
 // Function to convert a char to an integer array (0s and 1s)
 void charToIntArray(char c, int intArray[8])
@@ -118,6 +119,33 @@ void keygen(string hex, int keyArray1[], int keyArray2[])
     leftShift(rightKeyArray, 5);
     combineArrays(leftKeyArray, 5, rightKeyArray, 5, leftShifted10);
     permute(leftShifted10, P8, keyArray2, 8);
+}
+
+void expansion(int initialArray[4], int expandedArray[8])
+{
+    for(int i = 0; i < 8; i++)
+    {
+        expandedArray[i] = initialArray[EP[i]-1];
+    }
+}
+
+void feistal (int charArray[8], int keyArray[8])
+{
+    int leftCharArray[4];
+    int rightCharArray[4];
+
+    for (int i = 0; i < 4; i++)
+    {
+        leftCharArray[i] = charArray[i];
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        rightCharArray[i] = charArray[i + 4];
+    }
+    int expandedRight[8];
+    expansion(rightCharArray, expandedRight);
+    
 }
 
 int main()
