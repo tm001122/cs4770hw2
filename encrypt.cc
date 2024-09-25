@@ -1,9 +1,10 @@
 #include <iostream>
 #include <fstream>
+#include <math.h>
 
 using namespace std;
 
-int debug = 1;
+int debug = 0;
 int IP[8] = {2, 6, 3, 1, 4, 8, 5, 7};
 int IP1[8] = {4, 1, 3, 5, 7, 2, 8, 6};
 int P10[10] = {3, 5, 2, 7, 4, 10, 1, 9, 8, 6};
@@ -98,6 +99,13 @@ void keygen(string hex, int keyArray1[], int keyArray2[])
     int permutedKeyArray[10];
     permute(keyArray, P10, permutedKeyArray, 10);
 
+    if (debug == 1)
+    {
+        cout << "P10 Key Array: ";
+        printIntArray(permutedKeyArray, 10);
+        cout << endl;
+    }
+
     // break permuted key array into left and right halves
     int leftKeyArray[5];
     int rightKeyArray[5];
@@ -110,17 +118,6 @@ void keygen(string hex, int keyArray1[], int keyArray2[])
         rightKeyArray[i] = permutedKeyArray[i + 5];
     }
 
-    if (debug == 1)
-    {
-        cout << "Left Key Array: ";
-        printIntArray(leftKeyArray, 5);
-        cout << endl;
-
-        cout << "Right Key Array: ";
-        printIntArray(rightKeyArray, 5);
-        cout << endl;
-    }
-
     // left shift each half once
     leftShift(leftKeyArray, 5);
     leftShift(rightKeyArray, 5);
@@ -130,8 +127,10 @@ void keygen(string hex, int keyArray1[], int keyArray2[])
     // convert combined array to 8bit array using P8 and assign it to keyArray1
     permute(leftShifted10, P8, keyArray1, 8);
 
-    // left shift each half again
+    // left shift each half again twice
     leftShift(leftKeyArray, 5);
+    leftShift(leftKeyArray, 5);
+    leftShift(rightKeyArray, 5);
     leftShift(rightKeyArray, 5);
     // combine shifted halves back into one size 10 array
     combineArrays(leftKeyArray, 5, rightKeyArray, 5, leftShifted10);
@@ -248,20 +247,31 @@ void switchArray(int array[8], int switchedArray[8])
     combineArrays(rightArray, 4, leftArray, 4, switchedArray);
 }
 
+// char bitsToChar(int bits[8])
+// {
+//     char result = 0;
+//     // iterate over the 8 bits
+//     for (int i = 0; i < 8; i++)
+//     {
+//         // shift the bit and combine it using bitwise OR
+//         result |= (bits[i] << (7 - i));
+//     }
+
+//     return result;
+// }
+
 char bitsToChar(int bits[8])
 {
-    char result = 0;
-    // iterate over the 8 bits
-    for (int i = 0; i < 8; i++)
+    int temp;
+    for (int i = 0; i < 8; ++i)
     {
-        // shift the bit and combine it using bitwise OR
-        result |= (bits[i] << (7 - i));
+        temp += bits[i] * pow(2, 7 - i);
     }
-
-    return result;
+    char finChar = temp;
+    return finChar;
 }
 
-void process(char c, char e, string key)
+char process(char c, string key)
 {
     // create an integer array to hold the 8 bits
     int intArrayOfC[8];
@@ -271,31 +281,68 @@ void process(char c, char e, string key)
 
     if (debug == 1)
     {
-        cout<<"Initial Char Array: ";
+        cout << "Initial Char Array: ";
         printIntArray(intArrayOfC, 8);
-        cout<<endl;
+        cout << endl;
     }
 
     // permute int array of c with IP
     int permutedArray[8];
     permute(intArrayOfC, IP, permutedArray, 8);
 
+    if (debug == 1)
+    {
+        cout << "Permuted with IP Array: ";
+        printIntArray(permutedArray, 8);
+        cout << endl;
+    }
+
     // generate both keys
     int keyArray1[8];
     int keyArray2[8];
     keygen(key, keyArray1, keyArray2);
 
+    if (debug == 1)
+    {
+        cout << "Key Arrays: " << endl;
+        printIntArray(keyArray1, 8);
+        cout << endl;
+        printIntArray(keyArray2, 8);
+        cout << endl;
+    }
+
     // run feistal function using first key
     int feistalOutput1[8];
     feistal(permutedArray, keyArray1, feistalOutput1);
+
+    if (debug == 1)
+    {
+        cout << "Feistal Output 1: ";
+        printIntArray(feistalOutput1, 8);
+        cout << endl;
+    }
 
     // switch feistal output data
     int switchedFeistalOutput1[8];
     switchArray(feistalOutput1, switchedFeistalOutput1);
 
+    if (debug == 1)
+    {
+        cout << "Switched Feistal Output 1: ";
+        printIntArray(switchedFeistalOutput1, 8);
+        cout << endl;
+    }
+
     // run feistal function using second key on switched feistal output
     int feistalOutput2[8];
     feistal(switchedFeistalOutput1, keyArray2, feistalOutput2);
+
+    if (debug == 1)
+    {
+        cout << "Feistal Output 2: ";
+        printIntArray(feistalOutput2, 8);
+        cout << endl;
+    }
 
     // permute second feistal output with IP-1
     int finalOutput[8];
@@ -303,69 +350,29 @@ void process(char c, char e, string key)
 
     if (debug == 1)
     {
-        cout<<"Encrypted Char Array: ";
+        cout << "Encrypted Char Array: ";
         printIntArray(finalOutput, 8);
-        cout<<endl;
+        cout << endl;
     }
 
     // convert final output array back into a char
-    e = bitsToChar(finalOutput);
+    return bitsToChar(finalOutput);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-    ofstream outFile;
-
-    // Open the file (it will be created if it doesn't exist)
-    outFile.open("output.txt");
-
-    // Check if the file opened successfully
-    if (!outFile)
+    if (argc != 2)
     {
-        cerr << "Error opening file!" << endl;
-        return 1;
+        cout << "Invalid Number of Arguments" << endl;
     }
+    string keyString = (argv[1]);
+    char current = getchar();
 
-    string keyInput;
-    cout << "Enter key: " << endl;
-    cin >> keyInput;
-    char initial = '/';
-    char encrypted = ' ';
-    process(initial, encrypted, keyInput);
-
-    outFile << "Initial character: " << initial << endl;
-    outFile << "Encrypted character: " << encrypted << endl;
-
-    outFile.close();
-    // char myChar = 'j'; // Example character ('A' = 65 in ASCII)
-
-    // string key = "0x2AA";
-
-    // int keyArray1[8];
-    // int keyArray2[8];
-    // keygen(key, keyArray1, keyArray2);
-
-    // cout << "Key 1: ";
-    // printIntArray(keyArray1, 8);
-    // cout << "\nKey2: ";
-    // printIntArray(keyArray2, 8);
-    // cout << "\n";
-
-    // // Create an integer array to hold the 8 bits
-    // int intArray[8];
-
-    // // Convert the character to an integer array
-    // charToIntArray(myChar, intArray);
-
-    // int permutedArray[8];
-
-    // permute(intArray, IP, permutedArray, 8);
-
-    // // Print the integer array
-    // cout << "Integer array for character '" << myChar << "': ";
-    // printIntArray(intArray, 8);
-    // cout << "Permuted integer array for character '" << myChar << "': ";
-    // printIntArray(permutedArray, 8);
+    while (current != EOF)
+    {
+        cout << process(current, keyString);
+        current = getchar();
+    }
 
     return 0;
 }
