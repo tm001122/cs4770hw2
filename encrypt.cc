@@ -281,7 +281,7 @@ char process(char c, string key)
 
     if (debug == 1)
     {
-        cout << "Initial Char Array: ";
+        cout << "\n\n---------------\n\nInitial Char: " << c <<"\n\nInitial Char Array: ";
         printIntArray(intArrayOfC, 8);
         cout << endl;
     }
@@ -353,19 +353,38 @@ char process(char c, string key)
         cout << "Encrypted Char Array: ";
         printIntArray(finalOutput, 8);
         cout << endl;
+        cout<<"Encrypted Char: ";
     }
 
     // convert final output array back into a char
     return bitsToChar(finalOutput);
 }
 
+void usage()
+{
+    cout << "--==<< Usage >>==--" << endl;
+    cout << "./encrypt <-d> <key> \n  - '-d' is optional for debugging\n  - key should be entered as 0xYYY hexidecimal number" << endl;
+    cout << "'make clean' \n  - removes encrypt and encrypt.o files made during compilation" << endl;
+}
+
 int main(int argc, char *argv[])
 {
-    if (argc != 2)
-    {
-        cout << "Invalid Number of Arguments" << endl;
-    }
     string keyString = (argv[1]);
+    string argvStrings[argc];
+    for (int i = 0; i < argc; i++)
+    {
+        argvStrings[i] = argv[i];
+    }
+    if (argvStrings[1] == "-d")
+    {
+        debug = 1;
+        keyString = argvStrings[2];
+    }
+    else
+    {
+        debug = 0;
+        keyString = argvStrings[1];
+    }
     char current = getchar();
 
     while (current != EOF)
