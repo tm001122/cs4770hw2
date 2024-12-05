@@ -1,27 +1,27 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -Wall -g
+CXXFLAGS = -std=c++11 -Wall -Wextra -g
 
 # Target executable
 TARGET = encrypt
 
-# Source files
-SRCS = encrypt.cc
+# Source file
+SRC = encrypt.cc
 
-# Object files
-OBJS = $(SRCS:.cc=.o)
+# Object file
+OBJ = $(SRC:.cc=.o)
 
-# Default rule: build the executable
+# Default target
 all: $(TARGET)
 
-# Rule to build the executable
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+# Build the executable
+$(TARGET): $(OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-# Rule to compile .cc files into .o files
+# Compile source file into object file
 %.o: %.cc
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Clean up all object files and the executable
+# Clean up build artifacts
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(TARGET) $(OBJ)

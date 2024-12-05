@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int debug = 0;
+int debug = 1;
 int IP[8] = {2, 6, 3, 1, 4, 8, 5, 7};
 int IP1[8] = {4, 1, 3, 5, 7, 2, 8, 6};
 int P10[10] = {3, 5, 2, 7, 4, 10, 1, 9, 8, 6};
@@ -19,6 +19,12 @@ int S1[4][4] = {{0, 1, 2, 3},
                 {3, 0, 1, 0},
                 {2, 1, 0, 3}};
 int P4[4] = {2, 4, 3, 1};
+
+int byteNum = 0;
+int firstTimeThroughKeyGen = 1;
+
+int bitsToDecimal10(const int bits[10]);
+int bitsToDecimal(const int bits[8]);
 
 // function to convert a char to an integer array (0s and 1s)
 void charToIntArray(char c, int intArray[8])
@@ -116,6 +122,12 @@ void keygen(string hex, int keyArray1[], int keyArray2[])
     for (int i = 0; i < 5; i++)
     {
         rightKeyArray[i] = permutedKeyArray[i + 5];
+    }
+
+    if(firstTimeThroughKeyGen)
+    {
+        cerr<<"p10: "<<bitsToDecimal10(permutedKeyArray)<<endl;
+        firstTimeThroughKeyGen = 0;
     }
 
     // left shift each half once
@@ -247,28 +259,37 @@ void switchArray(int array[8], int switchedArray[8])
     combineArrays(rightArray, 4, leftArray, 4, switchedArray);
 }
 
-// char bitsToChar(int bits[8])
-// {
-//     char result = 0;
-//     // iterate over the 8 bits
-//     for (int i = 0; i < 8; i++)
-//     {
-//         // shift the bit and combine it using bitwise OR
-//         result |= (bits[i] << (7 - i));
-//     }
-
-//     return result;
-// }
-
-char bitsToChar(int bits[8])
-{
-    int temp;
-    for (int i = 0; i < 8; ++i)
-    {
+char bitsToChar(int bits[8]) {
+    int temp = 0;  // Initialize temp to 0
+    for (int i = 0; i < 8; ++i) {
         temp += bits[i] * pow(2, 7 - i);
     }
-    char finChar = temp;
-    return finChar;
+    return static_cast<char>(temp);
+}
+
+// Function to convert an array of 8 bits to decimal
+int bitsToDecimal(const int bits[8]) {
+    int decimal = 0;
+
+    // Iterate over the bits array
+    for (int i = 0; i < 8; i++) {
+        // Accumulate the decimal value, multiplying each bit by the corresponding power of 2
+        decimal += bits[i] * pow(2, 7 - i);
+    }
+
+    return decimal;
+}
+
+int bitsToDecimal10(const int bits[10]) {
+    int decimal = 0;
+
+    // Iterate over the bits array
+    for (int i = 0; i < 10; i++) {
+        // Accumulate the decimal value, multiplying each bit by the corresponding power of 2
+        decimal += bits[i] * pow(2, 9 - i);
+    }
+
+    return decimal;
 }
 
 char process(char c, string key)
@@ -278,6 +299,8 @@ char process(char c, string key)
 
     // convert the character to an integer array
     charToIntArray(c, intArrayOfC);
+
+    cerr<<"encrypting byte #"<<byteNum<<" with value "<<bitsToDecimal(intArrayOfC)<<endl;
 
     if (debug == 1)
     {
@@ -289,6 +312,8 @@ char process(char c, string key)
     // permute int array of c with IP
     int permutedArray[8];
     permute(intArrayOfC, IP, permutedArray, 8);
+
+    cerr<<"ip: "<<bitsToDecimal(permutedArray)<<endl;
 
     if (debug == 1)
     {
@@ -326,6 +351,8 @@ char process(char c, string key)
     int switchedFeistalOutput1[8];
     switchArray(feistalOutput1, switchedFeistalOutput1);
 
+    cerr<<"fk1: "<<bitsToDecimal(switchedFeistalOutput1)<<endl; //fk1 output after feistal and switch
+
     if (debug == 1)
     {
         cout << "Switched Feistal Output 1: ";
@@ -336,6 +363,8 @@ char process(char c, string key)
     // run feistal function using second key on switched feistal output
     int feistalOutput2[8];
     feistal(switchedFeistalOutput1, keyArray2, feistalOutput2);
+
+    cerr<<"fk2: "<<bitsToDecimal(feistalOutput2)<<endl; //fk2 after feistal number 2
 
     if (debug == 1)
     {
@@ -387,9 +416,17 @@ int main(int argc, char *argv[])
     }
     char current = getchar();
 
+    int keyArray1[8];
+    int keyArray2[8];
+    keygen(keyString, keyArray1, keyArray2);
+
+    cerr<<"k1: "<<bitsToDecimal(keyArray1)<<endl;
+    cerr<<"k2: "<<bitsToDecimal(keyArray2)<<endl;
+
     while (current != EOF)
     {
         cout << process(current, keyString);
+        byteNum++;
         current = getchar();
     }
 
